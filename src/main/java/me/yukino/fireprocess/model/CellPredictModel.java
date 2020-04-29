@@ -51,7 +51,8 @@ public class CellPredictModel implements ICellPredictModel {
 
     @Override
     public void tick() {
-
+        // Hashset
+        // Cell equals(), hashCode()
     }
 
     @Override
