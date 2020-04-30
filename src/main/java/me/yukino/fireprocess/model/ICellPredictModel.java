@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface ICellPredictModel {
 
-    void init(double dl);
+    void init(double dl, List<Cell> cells);
 
     void predict(long timeInMillis);
 

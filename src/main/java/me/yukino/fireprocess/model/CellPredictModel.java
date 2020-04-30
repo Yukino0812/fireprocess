@@ -1,12 +1,14 @@
 package me.yukino.fireprocess.model;
 
 import me.yukino.fireprocess.enumeration.CellBurningStatus;
+import me.yukino.fireprocess.util.PrintPredictUtil;
 import me.yukino.fireprocess.vo.Cell;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Hoshiiro Yukino
@@ -14,7 +16,7 @@ import java.util.Random;
 
 public class CellPredictModel implements ICellPredictModel {
 
-    private List<List<List<Cell>>> cells;
+    private Cell[][][] cells;
     private List<Cell> cellsIgnitionPossible;
     private List<Cell> cellsBurning;
     private List<Cell> cellsBurningFinish;
@@ -42,15 +44,55 @@ public class CellPredictModel implements ICellPredictModel {
      */
     private long globalTimeCount = 0;
 
-    @Override
-    public void init(double dl) {
-        cells = new ArrayList<>();
-        cellsIgnitionPossible = new ArrayList<>();
-        cellsBurning = new ArrayList<>();
-        cellsBurningFinish = new ArrayList<>();
-        cellsNonCombustible = new ArrayList<>();
+    /**
+     * 全局时间记录，用于保存上一次输出记录的时刻
+     * 以毫秒ms为单位
+     */
+    private long lastPrintTimeCount = 0;
 
+    /**
+     * 输出记录时间间隔
+     * 以毫秒ms为单位
+     */
+    private final long printInterval = 60 * 1000;
+
+    @Override
+    public void init(double dl, List<Cell> cells) {
+        this.cellsIgnitionPossible = new ArrayList<>();
+        this.cellsBurning = new ArrayList<>();
+        this.cellsBurningFinish = new ArrayList<>();
+        this.cellsNonCombustible = new ArrayList<>();
         this.dl = dl;
+
+        AtomicInteger maxX = new AtomicInteger();
+        AtomicInteger maxY = new AtomicInteger();
+        AtomicInteger maxZ = new AtomicInteger();
+        cells.parallelStream()
+                .forEach(cell -> {
+                    if (cell.getX() > maxX.get()) maxX.set(cell.getX());
+                    if (cell.getY() > maxY.get()) maxY.set(cell.getY());
+                    if (cell.getZ() > maxZ.get()) maxZ.set(cell.getZ());
+
+                    switch (cell.getBurningStatus()) {
+                        case CellBurningStatus.NON_COMBUSTIBLE:
+                            cellsNonCombustible.add(cell);
+                            break;
+                        case CellBurningStatus.IGNITION_POSSIBLE:
+                            cellsIgnitionPossible.add(cell);
+                            break;
+                        case CellBurningStatus.BURNING:
+                            cellsBurning.add(cell);
+                            break;
+                        case CellBurningStatus.BURNING_FINISH:
+                            cellsBurningFinish.add(cell);
+                            break;
+                        default:
+                            cellsIgnitionPossible.add(cell);
+                    }
+                });
+        this.cells = new Cell[maxX.get()][maxY.get()][maxZ.get()];
+        cells.parallelStream()
+                .forEach(cell -> this.cells[cell.getX()][cell.getY()][cell.getZ()] = cell);
     }
 
     @Override
@@ -68,11 +110,12 @@ public class CellPredictModel implements ICellPredictModel {
                         int x = cell.getX() + OFFSET[i][0];
                         int y = cell.getY() + OFFSET[i][1];
                         int z = cell.getZ() + OFFSET[i][2];
-                        if (x < 0 || x >= cells.size()) continue;
-                        if (y < 0 || y >= cells.get(x).size()) continue;
-                        if (z < 0 || z >= cells.get(x).get(y).size()) continue;
-                        Cell nearingCell = cells.get(x).get(y).get(z);
-                        if (nearingCell.getBurningStatus() != CellBurningStatus.IGNITION_POSSIBLE
+                        if (x < 0 || x >= cells.length) continue;
+                        if (y < 0 || y >= cells[x].length) continue;
+                        if (z < 0 || z >= cells[x][y].length) continue;
+                        Cell nearingCell = cells[x][y][z];
+                        if (nearingCell == null
+                                || nearingCell.getBurningStatus() != CellBurningStatus.IGNITION_POSSIBLE
                                 || nearingCell.getM() < minM) continue;
                         nearingCell.setCountBurningCellNearing(nearingCell.getCountBurningCellNearing() + OFFSET[i][3]);
                         cellsToBurn.add(nearingCell);
@@ -105,7 +148,10 @@ public class CellPredictModel implements ICellPredictModel {
         cellsToBurn.clear();
 
         globalTimeCount += stepSize;
-        
+        if (globalTimeCount - lastPrintTimeCount >= printInterval) {
+            print(globalTimeCount);
+            lastPrintTimeCount = globalTimeCount;
+        }
     }
 
     @Override
@@ -115,9 +161,24 @@ public class CellPredictModel implements ICellPredictModel {
         }
     }
 
+    private void print(long currentModelTime) {
+        StringBuffer stringBuffer = new StringBuffer();
+        getBurningCells().parallelStream()
+                .forEach(cell -> stringBuffer.append(String.format("%d %d %d\n", cell.getX(), cell.getY(), cell.getZ())));
+        PrintPredictUtil.savePredict(currentModelTime, stringBuffer.toString());
+    }
+
     @Override
     public void fixBurningCells(List<Cell> cellsBurning) {
-
+        cellsBurning.parallelStream()
+                .forEach(cell -> {
+                    this.cellsIgnitionPossible.remove(cell);
+                    this.cellsBurningFinish.remove(cell);
+                    this.cellsNonCombustible.remove(cell);
+                    if (!this.cellsBurning.contains(cell)) {
+                        this.cellsBurning.add(cell);
+                    }
+                });
     }
 
     @Override
