@@ -26,7 +26,6 @@ public interface ICellPredictModel {
      */
     List<Cell> getIgnitionPossibleCells();
 
-
     /**
      * 正在燃烧
      * @return
