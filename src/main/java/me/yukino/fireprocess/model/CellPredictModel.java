@@ -65,6 +65,12 @@ public class CellPredictModel implements ICellPredictModel {
         AtomicInteger maxX = new AtomicInteger();
         AtomicInteger maxY = new AtomicInteger();
         AtomicInteger maxZ = new AtomicInteger();
+
+        List<Cell> syncNonCombustible = Collections.synchronizedList(cellsNonCombustible);
+        List<Cell> syncBurning = Collections.synchronizedList(cellsBurning);
+        List<Cell> syncBurningFinish = Collections.synchronizedList(cellsBurningFinish);
+        List<Cell> syncIgnitionPossible = Collections.synchronizedList(cellsIgnitionPossible);
+
         Collections.synchronizedList(cells).parallelStream()
                 .forEach(cell -> {
                     if (cell.getX() > maxX.get()) maxX.set(cell.getX());
@@ -73,19 +79,16 @@ public class CellPredictModel implements ICellPredictModel {
 
                     switch (cell.getBurningStatus()) {
                         case CellBurningStatus.NON_COMBUSTIBLE:
-                            cellsNonCombustible.add(cell);
-                            break;
-                        case CellBurningStatus.IGNITION_POSSIBLE:
-                            cellsIgnitionPossible.add(cell);
+                            syncNonCombustible.add(cell);
                             break;
                         case CellBurningStatus.BURNING:
-                            cellsBurning.add(cell);
+                            syncBurning.add(cell);
                             break;
                         case CellBurningStatus.BURNING_FINISH:
-                            cellsBurningFinish.add(cell);
+                            syncBurningFinish.add(cell);
                             break;
                         default:
-                            cellsIgnitionPossible.add(cell);
+                            syncIgnitionPossible.add(cell);
                     }
                 });
         this.cells = new Cell[maxX.get()+1][maxY.get()+1][maxZ.get()+1];
@@ -101,7 +104,10 @@ public class CellPredictModel implements ICellPredictModel {
     @Override
     public void tick() {
         Set<Cell> cellsToBurn = Collections.synchronizedSet(new HashSet<>());
-        List<Cell> tempList = new ArrayList<>();
+        List<Cell> tempList = Collections.synchronizedList(new ArrayList<>());
+        List<Cell> syncBurning = Collections.synchronizedList(cellsBurning);
+        List<Cell> syncBurningFinish = Collections.synchronizedList(cellsBurningFinish);
+        List<Cell> syncIgnitionPossible = Collections.synchronizedList(cellsIgnitionPossible);
 
         // 计算正在燃烧的元胞
         Collections.synchronizedList(cellsBurning).parallelStream()
@@ -129,12 +135,12 @@ public class CellPredictModel implements ICellPredictModel {
                     if (cell.getM() < minM) {
                         cell.setBurningStatus(CellBurningStatus.BURNING_FINISH);
                         tempList.add(cell);
-                        Collections.synchronizedList(cellsBurningFinish).add(cell);
+                        syncBurningFinish.add(cell);
                     }
                 });
 
         // 移除燃尽元胞
-        tempList.forEach(cellsBurning::remove);
+        tempList.forEach(syncBurning::remove);
         tempList.clear();
 
         Random random = new Random();
@@ -149,8 +155,8 @@ public class CellPredictModel implements ICellPredictModel {
 
                     // 起燃
                     cell.setBurningStatus(CellBurningStatus.BURNING);
-                    Collections.synchronizedList(cellsIgnitionPossible).remove(cell);
-                    Collections.synchronizedList(cellsBurning).add(cell);
+                    syncIgnitionPossible.remove(cell);
+                    syncBurning.add(cell);
                 });
         cellsToBurn.clear();
 
@@ -185,13 +191,18 @@ public class CellPredictModel implements ICellPredictModel {
 
     @Override
     public void fixBurningCells(List<Cell> cellsBurning) {
+        List<Cell> syncNonCombustible = Collections.synchronizedList(cellsNonCombustible);
+        List<Cell> syncBurning = Collections.synchronizedList(this.cellsBurning);
+        List<Cell> syncBurningFinish = Collections.synchronizedList(cellsBurningFinish);
+        List<Cell> syncIgnitionPossible = Collections.synchronizedList(cellsIgnitionPossible);
+
         Collections.synchronizedList(cellsBurning).parallelStream()
                 .forEach(cell -> {
-                    this.cellsIgnitionPossible.remove(cell);
-                    this.cellsBurningFinish.remove(cell);
-                    this.cellsNonCombustible.remove(cell);
-                    if (!this.cellsBurning.contains(cell)) {
-                        this.cellsBurning.add(cell);
+                    syncIgnitionPossible.remove(cell);
+                    syncBurningFinish.remove(cell);
+                    syncNonCombustible.remove(cell);
+                    if (!syncBurning.contains(cell)) {
+                        syncBurning.add(cell);
                     }
                 });
     }
