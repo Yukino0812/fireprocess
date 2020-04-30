@@ -32,15 +32,15 @@ public class CellPredictModelTest {
                 if (x == 499 && y == 499) {
                     cell.setBurningStatus(CellBurningStatus.BURNING);
                 }
-                if (x==480 && y>480 &&y<520){
-                    cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
-                }
-                if (x==520&& y>480 &&y<520){
-                    cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
-                }
-                if (y==520&&x>=480&&x<=520){
-                    cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
-                }
+//                if (x==480 && y>480 &&y<520){
+//                    cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
+//                }
+//                if (x==520&& y>480 &&y<520){
+//                    cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
+//                }
+//                if (y==520&&x>=480&&x<=520){
+//                    cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
+//                }
                 cells.add(cell);
             }
         }
@@ -49,7 +49,7 @@ public class CellPredictModelTest {
 
     @Test
     public void testPredict(){
-        cellPredictModel.predict(5 * 60*1000);
+        cellPredictModel.predict(10 * 60*1000);
     }
 
 }

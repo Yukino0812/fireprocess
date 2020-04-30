@@ -45,7 +45,10 @@ public class PrintPredictUtil {
             row.add(cell.getY());
             row.add(cell.getZ());
             rows.add(row);
+
+            System.out.println(cell.getX()+" "+cell.getY()+" "+cell.getZ());
         }
+        System.out.println("========================");
         writer.write(rows);
         writer.close();
     }
