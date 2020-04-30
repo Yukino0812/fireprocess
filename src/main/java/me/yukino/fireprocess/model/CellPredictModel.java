@@ -4,10 +4,7 @@ import me.yukino.fireprocess.enumeration.CellBurningStatus;
 import me.yukino.fireprocess.util.PrintPredictUtil;
 import me.yukino.fireprocess.vo.Cell;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -39,6 +36,12 @@ public class CellPredictModel implements ICellPredictModel {
     private final double minM = 1e-6;
 
     /**
+     * 输出记录时间间隔
+     * 以毫秒ms为单位
+     */
+    private final long printInterval = 60 * 1000;
+
+    /**
      * 全局时间记录，用于tick后输出cells记录
      * 以毫秒ms为单位
      */
@@ -50,11 +53,6 @@ public class CellPredictModel implements ICellPredictModel {
      */
     private long lastPrintTimeCount = 0;
 
-    /**
-     * 输出记录时间间隔
-     * 以毫秒ms为单位
-     */
-    private final long printInterval = 60 * 1000;
 
     @Override
     public void init(double dl, List<Cell> cells) {
@@ -67,7 +65,7 @@ public class CellPredictModel implements ICellPredictModel {
         AtomicInteger maxX = new AtomicInteger();
         AtomicInteger maxY = new AtomicInteger();
         AtomicInteger maxZ = new AtomicInteger();
-        cells.parallelStream()
+        Collections.synchronizedList(cells).parallelStream()
                 .forEach(cell -> {
                     if (cell.getX() > maxX.get()) maxX.set(cell.getX());
                     if (cell.getY() > maxY.get()) maxY.set(cell.getY());
@@ -90,8 +88,8 @@ public class CellPredictModel implements ICellPredictModel {
                             cellsIgnitionPossible.add(cell);
                     }
                 });
-        this.cells = new Cell[maxX.get()][maxY.get()][maxZ.get()];
-        cells.parallelStream()
+        this.cells = new Cell[maxX.get()+1][maxY.get()+1][maxZ.get()+1];
+        Collections.synchronizedList(cells).parallelStream()
                 .forEach(cell -> this.cells[cell.getX()][cell.getY()][cell.getZ()] = cell);
     }
 
@@ -102,8 +100,12 @@ public class CellPredictModel implements ICellPredictModel {
 
     @Override
     public void tick() {
-        HashSet<Cell> cellsToBurn = new HashSet<>();
-        cellsBurning.parallelStream()
+        Set<Cell> cellsToBurn = Collections.synchronizedSet(new HashSet<>());
+        List<Cell> tempList = new ArrayList<>();
+
+        // 计算正在燃烧的元胞
+        Collections.synchronizedList(cellsBurning).parallelStream()
+                .filter(Objects::nonNull)
                 .forEach(cell -> {
                     // 计算相邻未开始燃烧的可燃元胞
                     for (int i = 0; i < OFFSET.length; ++i) {
@@ -117,7 +119,7 @@ public class CellPredictModel implements ICellPredictModel {
                         if (nearingCell == null
                                 || nearingCell.getBurningStatus() != CellBurningStatus.IGNITION_POSSIBLE
                                 || nearingCell.getM() < minM) continue;
-                        nearingCell.setCountBurningCellNearing(nearingCell.getCountBurningCellNearing() + OFFSET[i][3]);
+                        nearingCell.getCountBurningCellNearing().addAndGet(OFFSET[i][3]);
                         cellsToBurn.add(nearingCell);
                     }
 
@@ -126,27 +128,33 @@ public class CellPredictModel implements ICellPredictModel {
                     // 可燃物消耗完后，认为燃尽
                     if (cell.getM() < minM) {
                         cell.setBurningStatus(CellBurningStatus.BURNING_FINISH);
-                        cellsBurning.remove(cell);
-                        cellsBurningFinish.add(cell);
+                        tempList.add(cell);
+                        Collections.synchronizedList(cellsBurningFinish).add(cell);
                     }
                 });
 
+        // 移除燃尽元胞
+        tempList.forEach(cellsBurning::remove);
+        tempList.clear();
+
         Random random = new Random();
 
+        // 计算可燃元胞
         cellsToBurn.parallelStream()
                 .forEach(cell -> {
-                    double probabilityToBurn = cell.getV() * cell.getCountBurningCellNearing() * ((double) stepSize / 1000) / (4 * dl);
-                    cell.setCountBurningCellNearing(0);
+                    double probabilityToBurn = cell.getV() * cell.getCountBurningCellNearing().get() * ((double) stepSize / 1000) / (4 * dl);
+                    cell.getCountBurningCellNearing().set(0);
                     // 没有起燃
                     if (random.nextDouble() >= probabilityToBurn) return;
 
                     // 起燃
                     cell.setBurningStatus(CellBurningStatus.BURNING);
-                    cellsIgnitionPossible.remove(cell);
-                    cellsBurning.add(cell);
+                    Collections.synchronizedList(cellsIgnitionPossible).remove(cell);
+                    Collections.synchronizedList(cellsBurning).add(cell);
                 });
         cellsToBurn.clear();
 
+        // 记录元胞数据
         globalTimeCount += stepSize;
         if (globalTimeCount - lastPrintTimeCount >= printInterval) {
             print(globalTimeCount);
@@ -161,16 +169,23 @@ public class CellPredictModel implements ICellPredictModel {
         }
     }
 
+    @Override
+    public void reset() {
+        cellsIgnitionPossible.addAll(cellsBurning);
+        cellsIgnitionPossible.addAll(cellsBurningFinish);
+        cellsBurning.clear();
+        cellsBurningFinish.clear();
+        globalTimeCount = 0;
+        lastPrintTimeCount = 0;
+    }
+
     private void print(long currentModelTime) {
-        StringBuffer stringBuffer = new StringBuffer();
-        getBurningCells().parallelStream()
-                .forEach(cell -> stringBuffer.append(String.format("%d %d %d\n", cell.getX(), cell.getY(), cell.getZ())));
-        PrintPredictUtil.savePredict(currentModelTime, stringBuffer.toString());
+        PrintPredictUtil.savePredict(currentModelTime, getBurningCells());
     }
 
     @Override
     public void fixBurningCells(List<Cell> cellsBurning) {
-        cellsBurning.parallelStream()
+        Collections.synchronizedList(cellsBurning).parallelStream()
                 .forEach(cell -> {
                     this.cellsIgnitionPossible.remove(cell);
                     this.cellsBurningFinish.remove(cell);

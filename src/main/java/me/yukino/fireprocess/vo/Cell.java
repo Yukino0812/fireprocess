@@ -1,8 +1,12 @@
 package me.yukino.fireprocess.vo;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Hoshiiro Yukino
@@ -12,7 +16,6 @@ import java.util.Objects;
 @Setter
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
 public class Cell {
 
     private Integer x;
@@ -38,7 +41,7 @@ public class Cell {
      * 正交元胞以2倍计算，对角元胞为1倍
      * 即 f = [2n+] + [nx]
      */
-    private Integer countBurningCellNearing;
+    private AtomicInteger countBurningCellNearing;
 
     /**
      * 元胞状态
@@ -46,8 +49,20 @@ public class Cell {
      */
     private int burningStatus;
 
+    public Cell(Integer x, Integer y, Integer z, Double v, Double m, Double burningRate, int burningStatus) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.v = v;
+        this.m = m;
+        this.burningRate = burningRate;
+        this.countBurningCellNearing = new AtomicInteger(0);
+        this.burningStatus = burningStatus;
+    }
+
     /**
      * 仅判断坐标是否相同
+     *
      * @param o
      * @return
      */

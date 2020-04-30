@@ -20,6 +20,8 @@ public interface ICellPredictModel {
 
     void fixBurningCells(List<Cell> cellsBurning);
 
+    void reset();
+
     /**
      * 可燃
      * @return
