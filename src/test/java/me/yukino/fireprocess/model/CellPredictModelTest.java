@@ -25,22 +25,14 @@ public class CellPredictModelTest {
         List<Cell> cells = new ArrayList<>();
         for (int x = 0; x < 1000; ++x) {
             for (int y = 0; y < 1000; ++y) {
-                Cell cell = new Cell(x, y, 0, 0.05, 1.0, 0.005, CellBurningStatus.IGNITION_POSSIBLE);
+                Cell cell = new Cell(x, y, 0, 0.05, 1.0, 0.005, CellBurningStatus.IGNITION_POSSIBLE, 1.0);
                 if (x == 0 || y == 0 || x == 999 || y == 999){
                     cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
                 }
                 if (x == 499 && y == 499) {
                     cell.setBurningStatus(CellBurningStatus.BURNING);
                 }
-//                if (x==480 && y>480 &&y<520){
-//                    cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
-//                }
-//                if (x==520&& y>480 &&y<520){
-//                    cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
-//                }
-//                if (y==520&&x>=480&&x<=520){
-//                    cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
-//                }
+
                 cells.add(cell);
             }
         }
@@ -49,7 +41,7 @@ public class CellPredictModelTest {
 
     @Test
     public void testPredict(){
-        cellPredictModel.predict(10 * 60*1000);
+        cellPredictModel.predict(60*1000);
     }
 
 }

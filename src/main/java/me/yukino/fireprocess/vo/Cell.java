@@ -49,7 +49,14 @@ public class Cell {
      */
     private int burningStatus;
 
-    public Cell(Integer x, Integer y, Integer z, Double v, Double m, Double burningRate, int burningStatus) {
+    /**
+     * 传播概率 0.0 - 1.0
+     * 用于对材质是否传播火势进行限制，与是否起燃无必然关联
+     * 值为0时该元胞不对外传播火势
+     */
+    private double propagateProbability;
+
+    public Cell(Integer x, Integer y, Integer z, Double v, Double m, Double burningRate, int burningStatus, double propagateProbability) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -58,6 +65,7 @@ public class Cell {
         this.burningRate = burningRate;
         this.countBurningCellNearing = new AtomicInteger(0);
         this.burningStatus = burningStatus;
+        this.propagateProbability = propagateProbability;
     }
 
     /**

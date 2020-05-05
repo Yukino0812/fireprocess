@@ -91,7 +91,7 @@ public class CellPredictModel implements ICellPredictModel {
                             syncIgnitionPossible.add(cell);
                     }
                 });
-        this.cells = new Cell[maxX.get()+1][maxY.get()+1][maxZ.get()+1];
+        this.cells = new Cell[maxX.get() + 1][maxY.get() + 1][maxZ.get() + 1];
         Collections.synchronizedList(cells).parallelStream()
                 .forEach(cell -> this.cells[cell.getX()][cell.getY()][cell.getZ()] = cell);
     }
@@ -109,10 +109,28 @@ public class CellPredictModel implements ICellPredictModel {
         List<Cell> syncBurningFinish = Collections.synchronizedList(cellsBurningFinish);
         List<Cell> syncIgnitionPossible = Collections.synchronizedList(cellsIgnitionPossible);
 
+        Random random = new Random();
         // 计算正在燃烧的元胞
         Collections.synchronizedList(cellsBurning).parallelStream()
                 .filter(Objects::nonNull)
                 .forEach(cell -> {
+                    // 消耗自身可燃物
+                    cell.setM(cell.getM() - cell.getBurningRate() * (double) stepSize / 1000);
+                    // 可燃物消耗完后，认为燃尽
+                    if (cell.getM() < minM) {
+                        cell.setBurningStatus(CellBurningStatus.BURNING_FINISH);
+                        tempList.add(cell);
+                        syncBurningFinish.add(cell);
+                    }
+
+                    // 元胞火势传播过程
+                    // 判断元胞本轮计算是否需要传播火势
+                    if (cell.getPropagateProbability() <= 0) {
+                        return;
+                    }
+                    if (random.nextDouble() >= cell.getPropagateProbability()) {
+                        return;
+                    }
                     // 计算相邻未开始燃烧的可燃元胞
                     for (int i = 0; i < OFFSET.length; ++i) {
                         int x = cell.getX() + OFFSET[i][0];
@@ -129,21 +147,12 @@ public class CellPredictModel implements ICellPredictModel {
                         cellsToBurn.add(nearingCell);
                     }
 
-                    // 消耗自身可燃物
-                    cell.setM(cell.getM() - cell.getBurningRate() * (double) stepSize / 1000);
-                    // 可燃物消耗完后，认为燃尽
-                    if (cell.getM() < minM) {
-                        cell.setBurningStatus(CellBurningStatus.BURNING_FINISH);
-                        tempList.add(cell);
-                        syncBurningFinish.add(cell);
-                    }
                 });
 
         // 移除燃尽元胞
         tempList.forEach(syncBurning::remove);
         tempList.clear();
 
-        Random random = new Random();
 
         // 计算可燃元胞
         cellsToBurn.parallelStream()
