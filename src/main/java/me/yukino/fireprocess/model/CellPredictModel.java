@@ -53,6 +53,12 @@ public class CellPredictModel implements ICellPredictModel {
      */
     private long lastPrintTimeCount = 0;
 
+    /**
+     * min xyz用于规范负数坐标
+     */
+    private int minX;
+    private int minY;
+    private int minZ;
 
     @Override
     public void init(double dl, List<Cell> cells) {
@@ -62,9 +68,12 @@ public class CellPredictModel implements ICellPredictModel {
         this.cellsNonCombustible = new ArrayList<>();
         this.dl = dl;
 
-        AtomicInteger maxX = new AtomicInteger();
-        AtomicInteger maxY = new AtomicInteger();
-        AtomicInteger maxZ = new AtomicInteger();
+        AtomicInteger maxX = new AtomicInteger(Integer.MIN_VALUE);
+        AtomicInteger maxY = new AtomicInteger(Integer.MIN_VALUE);
+        AtomicInteger maxZ = new AtomicInteger(Integer.MIN_VALUE);
+        AtomicInteger minX = new AtomicInteger(Integer.MAX_VALUE);
+        AtomicInteger minY = new AtomicInteger(Integer.MAX_VALUE);
+        AtomicInteger minZ = new AtomicInteger(Integer.MAX_VALUE);
 
         List<Cell> syncNonCombustible = Collections.synchronizedList(cellsNonCombustible);
         List<Cell> syncBurning = Collections.synchronizedList(cellsBurning);
@@ -76,6 +85,9 @@ public class CellPredictModel implements ICellPredictModel {
                     if (cell.getX() > maxX.get()) maxX.set(cell.getX());
                     if (cell.getY() > maxY.get()) maxY.set(cell.getY());
                     if (cell.getZ() > maxZ.get()) maxZ.set(cell.getZ());
+                    if (cell.getX() < minX.get()) minX.set(cell.getX());
+                    if (cell.getY() < minY.get()) minY.set(cell.getY());
+                    if (cell.getZ() < minZ.get()) minZ.set(cell.getZ());
 
                     switch (cell.getBurningStatus()) {
                         case CellBurningStatus.NON_COMBUSTIBLE:
@@ -91,9 +103,17 @@ public class CellPredictModel implements ICellPredictModel {
                             syncIgnitionPossible.add(cell);
                     }
                 });
-        this.cells = new Cell[maxX.get() + 1][maxY.get() + 1][maxZ.get() + 1];
+        this.minX = minX.get();
+        this.minY = minY.get();
+        this.minZ = minZ.get();
+        this.cells = new Cell[maxX.get() - minX.get() + 1][maxY.get() - minY.get() + 1][maxZ.get() - minZ.get() + 1];
         Collections.synchronizedList(cells).parallelStream()
-                .forEach(cell -> this.cells[cell.getX()][cell.getY()][cell.getZ()] = cell);
+                .forEach(cell -> this.cells[cell.getX() - minX.get()][cell.getY() - minY.get()][cell.getZ() - minZ.get()] = cell);
+
+        // 着火点假数据
+        List<Cell> fakeBurningCellList = new ArrayList<>();
+        fakeBurningCellList.add(cellsIgnitionPossible.get(0));
+        fixBurningCells(fakeBurningCellList);
     }
 
     @Override
@@ -133,9 +153,9 @@ public class CellPredictModel implements ICellPredictModel {
                     }
                     // 计算相邻未开始燃烧的可燃元胞
                     for (int i = 0; i < OFFSET.length; ++i) {
-                        int x = cell.getX() + OFFSET[i][0];
-                        int y = cell.getY() + OFFSET[i][1];
-                        int z = cell.getZ() + OFFSET[i][2];
+                        int x = cell.getX() - minX + OFFSET[i][0];
+                        int y = cell.getY() - minY + OFFSET[i][1];
+                        int z = cell.getZ() - minZ + OFFSET[i][2];
                         if (x < 0 || x >= cells.length) continue;
                         if (y < 0 || y >= cells[x].length) continue;
                         if (z < 0 || z >= cells[x][y].length) continue;

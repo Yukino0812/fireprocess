@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Hoshiiro Yukino
@@ -25,12 +26,11 @@ import java.util.*;
 public class CellPredictModelTest {
 
     private static CellPredictModel cellPredictModel;
-    private final static double dl = 0.2;
 
     @BeforeAll
     public static void init() {
         cellPredictModel = new CellPredictModel();
-//        cellPredictModel.init(CellPredictConfig.dl, initCells());
+        cellPredictModel.init(CellPredictConfig.dl, initCells());
     }
 
     private static List<Cell> initCells() {
@@ -50,7 +50,7 @@ public class CellPredictModelTest {
         initRooms(roomsNode, cellSet);
         initWalls(wallsNode, cellSet);
 
-        return null;
+        return new ArrayList<>(cellSet);
     }
 
     private static void initRooms(JsonNode roomsNode, Set<Cell> cells) {
@@ -75,7 +75,24 @@ public class CellPredictModelTest {
     }
 
     private static void initWalls(JsonNode wallsNode, Set<Cell> cells) {
-
+        ObjectMapper objectMapper = new ObjectMapper();
+        VertexVo[] vertexex;
+        try {
+            vertexex = objectMapper.readValue(wallsNode.toString(), VertexVo[].class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return;
+        }
+        Set<Cell> syncCellSet = Collections.synchronizedSet(cells);
+        Arrays.stream(vertexex).parallel()
+                .forEach(vo -> {
+                    Cell[][][] cellArray = getCellsBetweenTwoVertexex(vo.getV1()[0], vo.getV1()[1], vo.getV1()[2], vo.getV2()[0], vo.getV2()[1], vo.getV2()[2], false);
+                    for (Cell[][] cellYZ : cellArray) {
+                        for (Cell[] cellZ : cellYZ) {
+                            syncCellSet.addAll(Arrays.asList(cellZ));
+                        }
+                    }
+                });
     }
 
     private static Cell[][][] getCellsBetweenTwoVertexex(double x1, double y1, double z1, double x2, double y2, double z2, boolean room) {
@@ -110,7 +127,7 @@ public class CellPredictModelTest {
 
     @Test
     public void testPredict() {
-//        cellPredictModel.predict(60 * 1000);
+        cellPredictModel.predict(60 * 1000);
     }
 
 }
