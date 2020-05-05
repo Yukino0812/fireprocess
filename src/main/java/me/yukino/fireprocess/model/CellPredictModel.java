@@ -184,6 +184,7 @@ public class CellPredictModel implements ICellPredictModel {
 
                     // 起燃
                     cell.setBurningStatus(CellBurningStatus.BURNING);
+                    cell.setIgnitionTime(globalTimeCount);
                     syncIgnitionPossible.remove(cell);
                     syncBurning.add(cell);
                 });

@@ -56,6 +56,8 @@ public class Cell {
      */
     private double propagateProbability;
 
+    private long ignitionTime;
+
     public Cell(Integer x, Integer y, Integer z, Double v, Double m, Double burningRate, int burningStatus, double propagateProbability) {
         this.x = x;
         this.y = y;
@@ -66,6 +68,7 @@ public class Cell {
         this.countBurningCellNearing = new AtomicInteger(0);
         this.burningStatus = burningStatus;
         this.propagateProbability = propagateProbability;
+        this.ignitionTime = 0;
     }
 
     /**
