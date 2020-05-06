@@ -8,6 +8,7 @@ import me.yukino.fireprocess.config.CellPredictConfig;
 import me.yukino.fireprocess.enumeration.CellBurningStatus;
 import me.yukino.fireprocess.util.CellCoordinateConvertor;
 import me.yukino.fireprocess.vo.Cell;
+import me.yukino.fireprocess.vo.NodeVo;
 import me.yukino.fireprocess.vo.VertexVo;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -46,11 +47,55 @@ public class CellPredictModelTest {
         JsonNode wallsNode = node.get("walls");
         Set<Cell> cellSet = new HashSet<>();
 
+        initFireDoors(cellSet);
         initWalls(wallsNode, cellSet);
         initRooms(roomsNode, cellSet);
         initOthers(cellSet);
 
         return new ArrayList<>(cellSet);
+    }
+
+    private static void initFireDoors(Set<Cell> cells){
+        File file = FileUtil.file("testRoute.json");
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode node;
+        try {
+            node = objectMapper.readTree(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        node = node.get("node");
+        NodeVo[] nodes;
+        try {
+            nodes = objectMapper.readValue(node.toString(), NodeVo[].class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        Set<Cell> syncCellSet = Collections.synchronizedSet(cells);
+        Arrays.stream(nodes).parallel()
+                .filter(nodeVo-> "Fd".equals(nodeVo.getName()))
+                .forEach(nodeVo -> {
+                    int safeRange = 5;
+                    for (int iX=0;iX<safeRange;++iX){
+                        for (int iY=0;iY<safeRange;++iY){
+                            for (int iZ=0;iZ<safeRange;++iZ){
+                                int x = CellCoordinateConvertor.toCellIndex(nodeVo.getX());
+                                int y = CellCoordinateConvertor.toCellIndex(nodeVo.getY());
+                                int z = CellCoordinateConvertor.toCellIndex(nodeVo.getZ());
+                                Cell cell = new Cell(x+iX-2,y+iY-2,z+iZ-2,
+                                        CellPredictConfig.DEFAULT_V,
+                                        CellPredictConfig.DEFAULT_M,
+                                        CellPredictConfig.DEFAULT_BURNING_RATE,
+                                        CellBurningStatus.NON_COMBUSTIBLE,
+                                        CellPredictConfig.DEFAULT_PROPAGATE_PROBABILITY);
+                                syncCellSet.add(cell);
+                            }
+                        }
+                    }
+                });
     }
 
     private static void initRooms(JsonNode roomsNode, Set<Cell> cells) {
