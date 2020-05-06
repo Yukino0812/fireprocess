@@ -9,9 +9,9 @@ import lombok.Data;
 @Data
 public class NodeVo {
 
-    private String Name;
-    private double X;
-    private double Y;
-    private double Z;
+    private String name;
+    private double x;
+    private double y;
+    private double z;
 
 }

@@ -19,12 +19,12 @@ public class CellPredictConfig {
     /**
      * 默认元胞可燃物负载
      */
-    public static final double DEFAULT_M = 1.0;
+    public static final double DEFAULT_M = 2;
 
     /**
      * 默认元胞可燃物燃烧速率
      */
-    public static final double DEFAULT_BURNING_RATE = 1.0 / 30;
+    public static final double DEFAULT_BURNING_RATE = 1.0 / 60;
 
     /**
      * 默认元胞火势扩散概率

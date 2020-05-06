@@ -40,7 +40,7 @@ public class CellPredictModel implements ICellPredictModel {
      * 输出记录时间间隔
      * 以毫秒ms为单位
      */
-    private final long printInterval = (long)((CellPredictConfig.DEFAULT_M / CellPredictConfig.DEFAULT_BURNING_RATE) * 1000);
+    private final long printInterval = Math.min((int)((CellPredictConfig.DEFAULT_M / CellPredictConfig.DEFAULT_BURNING_RATE) * 1000), 60 * 1000);
 
     /**
      * 全局时间记录，用于tick后输出cells记录
@@ -110,11 +110,6 @@ public class CellPredictModel implements ICellPredictModel {
         this.cells = new Cell[maxX.get() - minX.get() + 1][maxY.get() - minY.get() + 1][maxZ.get() - minZ.get() + 1];
         Collections.synchronizedList(cells).parallelStream()
                 .forEach(cell -> this.cells[cell.getX() - minX.get()][cell.getY() - minY.get()][cell.getZ() - minZ.get()] = cell);
-
-        // 着火点假数据
-        List<Cell> fakeBurningCellList = new ArrayList<>();
-        fakeBurningCellList.add(cellsIgnitionPossible.get(0));
-        fixBurningCells(fakeBurningCellList);
     }
 
     @Override
@@ -124,6 +119,11 @@ public class CellPredictModel implements ICellPredictModel {
 
     @Override
     public void tick() {
+        // 记录起火元胞
+        if (globalTimeCount == 0) {
+            print(globalTimeCount);
+        }
+
         Set<Cell> cellsToBurn = Collections.synchronizedSet(new HashSet<>());
         List<Cell> tempList = Collections.synchronizedList(new ArrayList<>());
         List<Cell> syncBurning = Collections.synchronizedList(cellsBurning);
@@ -192,9 +192,6 @@ public class CellPredictModel implements ICellPredictModel {
         cellsToBurn.clear();
 
         // 记录元胞数据
-        if (globalTimeCount == 0) {
-            print(globalTimeCount);
-        }
         globalTimeCount += stepSize;
         if (globalTimeCount - lastPrintTimeCount >= printInterval) {
             print(globalTimeCount);

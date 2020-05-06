@@ -31,6 +31,9 @@ public class CellPredictModelTest {
     public static void init() {
         cellPredictModel = new CellPredictModel();
         cellPredictModel.init(CellPredictConfig.dl, initCells());
+        List<Cell> burning = new ArrayList<>();
+        burning.add(fakeIgnitionCell);
+        cellPredictModel.fixBurningCells(burning);
     }
 
     private static List<Cell> initCells() {
@@ -98,6 +101,8 @@ public class CellPredictModelTest {
                 });
     }
 
+    private static Cell fakeIgnitionCell = null;
+
     private static void initRooms(JsonNode roomsNode, Set<Cell> cells) {
         ObjectMapper objectMapper = new ObjectMapper();
         VertexVo[] vertexex;
@@ -113,6 +118,9 @@ public class CellPredictModelTest {
                     Cell[][][] cellArray = getCellsBetweenTwoVertexex(vo.getV1()[0], vo.getV1()[1], vo.getV1()[2], vo.getV2()[0], vo.getV2()[1], vo.getV2()[2], true);
                     for (Cell[][] cellYZ : cellArray) {
                         for (Cell[] cellZ : cellYZ) {
+                            if (fakeIgnitionCell == null){
+                                fakeIgnitionCell = cellZ[0];
+                            }
                             syncCellSet.addAll(Arrays.asList(cellZ));
                         }
                     }
@@ -151,7 +159,7 @@ public class CellPredictModelTest {
         for (Cell[][] cellYZ : cellArray) {
             for (Cell[] cellZ : cellYZ) {
                 for (Cell cell:cellZ){
-                    cell.setPropagateProbability(0.02);
+                    cell.setPropagateProbability(0.1);
                     syncCellSet.add(cell);
                 }
             }
