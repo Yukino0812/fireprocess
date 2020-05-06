@@ -38,8 +38,7 @@ public class Cell {
 
     /**
      * 该参数表征相邻的在燃烧中元胞数量
-     * 正交元胞以2倍计算，对角元胞为1倍
-     * 即 f = [2n+] + [nx]
+     * 值越大越容易起燃
      */
     private AtomicInteger countBurningCellNearing;
 
