@@ -16,7 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Hoshiiro Yukino
@@ -49,6 +48,7 @@ public class CellPredictModelTest {
 
         initWalls(wallsNode, cellSet);
         initRooms(roomsNode, cellSet);
+        initOthers(cellSet);
 
         return new ArrayList<>(cellSet);
     }
@@ -95,6 +95,31 @@ public class CellPredictModelTest {
                 });
     }
 
+    /**
+     * 其他位置暂时均视为过道
+     *
+     * @param cells
+     */
+    private static void initOthers(Set<Cell> cells) {
+        Set<Cell> syncCellSet = Collections.synchronizedSet(cells);
+        Cell[][][] cellArray = getCellsBetweenTwoVertexex(globalMinX, globalMinY, globalMinZ, globalMaxX, globalMaxY, globalMaxZ, false);
+        for (Cell[][] cellYZ : cellArray) {
+            for (Cell[] cellZ : cellYZ) {
+                for (Cell cell:cellZ){
+                    cell.setPropagateProbability(0.02);
+                    syncCellSet.add(cell);
+                }
+            }
+        }
+    }
+
+    private static int globalMinX = Integer.MAX_VALUE;
+    private static int globalMinY = Integer.MAX_VALUE;
+    private static int globalMinZ = Integer.MAX_VALUE;
+    private static int globalMaxX = Integer.MIN_VALUE;
+    private static int globalMaxY = Integer.MIN_VALUE;
+    private static int globalMaxZ = Integer.MIN_VALUE;
+
     private static Cell[][][] getCellsBetweenTwoVertexex(double x1, double y1, double z1, double x2, double y2, double z2, boolean room) {
         int cellX1 = CellCoordinateConvertor.toCellIndex(x1);
         int cellY1 = CellCoordinateConvertor.toCellIndex(y1);
@@ -108,6 +133,12 @@ public class CellPredictModelTest {
         int rangeX = Math.abs(cellX1 - cellX2);
         int rangeY = Math.abs(cellY1 - cellY2);
         int rangeZ = Math.abs(cellZ1 - cellZ2);
+        globalMinX = Math.min(globalMinX, minX);
+        globalMinY = Math.min(globalMinY, minY);
+        globalMinZ = Math.min(globalMinZ, minZ);
+        globalMaxX = Math.max(globalMaxX, minX + rangeX);
+        globalMaxY = Math.max(globalMaxY, minY + rangeY);
+        globalMaxZ = Math.max(globalMaxZ, minZ + rangeZ);
         Cell[][][] cells = new Cell[rangeX + 1][rangeY + 1][rangeZ + 1];
         double propagateProbability = room ? CellPredictConfig.DEFAULT_PROPAGATE_PROBABILITY : 0.01;
         for (int iX = 0; iX <= rangeX; ++iX) {
@@ -127,7 +158,7 @@ public class CellPredictModelTest {
 
     @Test
     public void testPredict() {
-        cellPredictModel.predict(10* 60 * 1000);
+        cellPredictModel.predict(10 * 60 * 1000);
     }
 
 }
