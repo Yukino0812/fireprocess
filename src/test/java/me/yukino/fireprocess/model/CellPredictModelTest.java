@@ -109,7 +109,7 @@ public class CellPredictModelTest {
         int rangeY = Math.abs(cellY1 - cellY2);
         int rangeZ = Math.abs(cellZ1 - cellZ2);
         Cell[][][] cells = new Cell[rangeX + 1][rangeY + 1][rangeZ + 1];
-        double propagateProbability = room ? CellPredictConfig.DEFAULT_PROPAGATE_PROBABILITY : 0.05;
+        double propagateProbability = room ? CellPredictConfig.DEFAULT_PROPAGATE_PROBABILITY : 0.01;
         for (int iX = 0; iX <= rangeX; ++iX) {
             for (int iY = 0; iY <= rangeY; ++iY) {
                 for (int iZ = 0; iZ <= rangeZ; ++iZ) {
