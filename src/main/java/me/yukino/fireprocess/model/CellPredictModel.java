@@ -1,5 +1,6 @@
 package me.yukino.fireprocess.model;
 
+import me.yukino.fireprocess.config.CellPredictConfig;
 import me.yukino.fireprocess.enumeration.CellBurningStatus;
 import me.yukino.fireprocess.util.PrintPredictUtil;
 import me.yukino.fireprocess.vo.Cell;
@@ -39,7 +40,7 @@ public class CellPredictModel implements ICellPredictModel {
      * 输出记录时间间隔
      * 以毫秒ms为单位
      */
-    private final long printInterval = 60 * 1000;
+    private final long printInterval = (long)((CellPredictConfig.DEFAULT_M / CellPredictConfig.DEFAULT_BURNING_RATE) * 1000);
 
     /**
      * 全局时间记录，用于tick后输出cells记录
@@ -191,6 +192,9 @@ public class CellPredictModel implements ICellPredictModel {
         cellsToBurn.clear();
 
         // 记录元胞数据
+        if (globalTimeCount == 0) {
+            print(globalTimeCount);
+        }
         globalTimeCount += stepSize;
         if (globalTimeCount - lastPrintTimeCount >= printInterval) {
             print(globalTimeCount);
