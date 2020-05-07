@@ -40,7 +40,7 @@ public class CellPredictModel implements ICellPredictModel {
      * 输出记录时间间隔
      * 以毫秒ms为单位
      */
-    private final long printInterval = Math.min((int)((CellPredictConfig.DEFAULT_M / CellPredictConfig.DEFAULT_BURNING_RATE) * 1000), 60 * 1000);
+    private final long printInterval = Math.min((int) ((CellPredictConfig.DEFAULT_M / CellPredictConfig.DEFAULT_BURNING_RATE) * 1000), 60 * 1000);
 
     /**
      * 全局时间记录，用于tick后输出cells记录
@@ -135,10 +135,8 @@ public class CellPredictModel implements ICellPredictModel {
         Collections.synchronizedList(cellsBurning).parallelStream()
                 .filter(Objects::nonNull)
                 .forEach(cell -> {
-                    // 消耗自身可燃物
-                    cell.setM(cell.getM() - cell.getBurningRate() * (double) stepSize / 1000);
-                    // 可燃物消耗完后，认为燃尽
-                    if (cell.getM() < minM) {
+                    // 判断元胞是否燃烧完毕
+                    if (cell.getBurningFinishTime() < globalTimeCount) {
                         cell.setBurningStatus(CellBurningStatus.BURNING_FINISH);
                         tempList.add(cell);
                         syncBurningFinish.add(cell);
@@ -186,6 +184,7 @@ public class CellPredictModel implements ICellPredictModel {
                     // 起燃
                     cell.setBurningStatus(CellBurningStatus.BURNING);
                     cell.setIgnitionTime(globalTimeCount);
+                    cell.setBurningFinishTime(globalTimeCount + (long) ((cell.getM() / cell.getBurningRate()) * 1000));
                     syncIgnitionPossible.remove(cell);
                     syncBurning.add(cell);
                 });
@@ -229,6 +228,9 @@ public class CellPredictModel implements ICellPredictModel {
 
         Collections.synchronizedList(cellsBurning).parallelStream()
                 .forEach(cell -> {
+                    // 设置元胞燃尽时刻
+                    cell.setBurningFinishTime(globalTimeCount + (long) ((cell.getM() / cell.getBurningRate()) * 1000));
+
                     syncIgnitionPossible.remove(cell);
                     syncBurningFinish.remove(cell);
                     syncNonCombustible.remove(cell);

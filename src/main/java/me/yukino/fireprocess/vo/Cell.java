@@ -56,6 +56,7 @@ public class Cell {
     private double propagateProbability;
 
     private long ignitionTime;
+    private long burningFinishTime;
 
     public Cell(Integer x, Integer y, Integer z, Double v, Double m, Double burningRate, int burningStatus, double propagateProbability) {
         this.x = x;
@@ -68,6 +69,7 @@ public class Cell {
         this.burningStatus = burningStatus;
         this.propagateProbability = propagateProbability;
         this.ignitionTime = 0;
+        this.burningFinishTime = Integer.MAX_VALUE;
     }
 
     /**
