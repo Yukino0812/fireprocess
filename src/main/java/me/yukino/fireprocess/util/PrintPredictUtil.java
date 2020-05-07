@@ -7,6 +7,7 @@ import cn.hutool.poi.excel.ExcelWriter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.yukino.fireprocess.vo.Cell;
+import me.yukino.fireprocess.vo.PrintCellVo;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
@@ -35,11 +36,11 @@ public class PrintPredictUtil {
             file.setWritable(true);
         }
 
-        Map<Double,Map<Double,Map<Double,Long>>> mapXYZ = new ConcurrentHashMap<>(16);
+        Map<Double,Map<Double,Map<Double, PrintCellVo>>> mapXYZ = new ConcurrentHashMap<>(16);
         cells.parallelStream()
                 .forEach(cell -> {
                     double x = CellCoordinateConvertor.toBuildingModelCoordinate(cell.getX());
-                    Map<Double, Map<Double,Long>> mapYZ;
+                    Map<Double, Map<Double,PrintCellVo>> mapYZ;
                     if (!mapXYZ.containsKey(x)){
                         mapYZ = new ConcurrentHashMap<>(16);
                         mapXYZ.put(x,mapYZ);
@@ -48,7 +49,7 @@ public class PrintPredictUtil {
                     }
 
                     double y = CellCoordinateConvertor.toBuildingModelCoordinate(cell.getY());
-                    Map<Double,Long> mapZ;
+                    Map<Double,PrintCellVo> mapZ;
                     if (!mapYZ.containsKey(y)){
                         mapZ = new ConcurrentHashMap<>(16);
                         mapYZ.put(y,mapZ);
@@ -57,7 +58,8 @@ public class PrintPredictUtil {
                     }
 
                     double z = CellCoordinateConvertor.toBuildingModelCoordinate(cell.getZ());
-                    mapZ.put(z, cell.getIgnitionTime());
+                    PrintCellVo vo = new PrintCellVo(cell.getIgnitionTime(), cell.getBurningFinishTime());
+                    mapZ.put(z, vo);
                 });
 
         ObjectMapper objectMapper = new ObjectMapper();
