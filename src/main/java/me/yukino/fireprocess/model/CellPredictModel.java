@@ -3,6 +3,7 @@ package me.yukino.fireprocess.model;
 import me.yukino.fireprocess.config.CellPredictConfig;
 import me.yukino.fireprocess.enumeration.CellBurningStatus;
 import me.yukino.fireprocess.util.PrintPredictUtil;
+import me.yukino.fireprocess.vo.BurningCellVo;
 import me.yukino.fireprocess.vo.Cell;
 
 import java.util.*;
@@ -220,13 +221,14 @@ public class CellPredictModel implements ICellPredictModel {
     }
 
     @Override
-    public void fixBurningCells(List<Cell> cellsBurning) {
+    public void fixBurningCells(List<BurningCellVo> cellsBurning) {
         List<Cell> syncNonCombustible = Collections.synchronizedList(cellsNonCombustible);
         List<Cell> syncBurning = Collections.synchronizedList(this.cellsBurning);
         List<Cell> syncBurningFinish = Collections.synchronizedList(cellsBurningFinish);
         List<Cell> syncIgnitionPossible = Collections.synchronizedList(cellsIgnitionPossible);
 
         Collections.synchronizedList(cellsBurning).parallelStream()
+                .map(burningCellVo -> cells[burningCellVo.getX() - minX][burningCellVo.getY() - minY][burningCellVo.getZ() - minZ])
                 .forEach(cell -> {
                     // 设置元胞燃尽时刻
                     cell.setBurningFinishTime(globalTimeCount + (long) ((cell.getM() / cell.getBurningRate()) * 1000));

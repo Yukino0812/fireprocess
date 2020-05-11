@@ -1,5 +1,6 @@
 package me.yukino.fireprocess.model;
 
+import me.yukino.fireprocess.vo.BurningCellVo;
 import me.yukino.fireprocess.vo.Cell;
 
 import java.util.List;
@@ -18,7 +19,7 @@ public interface ICellPredictModel {
 
     void tick(int times);
 
-    void fixBurningCells(List<Cell> cellsBurning);
+    void fixBurningCells(List<BurningCellVo> cellsBurning);
 
     void reset();
 

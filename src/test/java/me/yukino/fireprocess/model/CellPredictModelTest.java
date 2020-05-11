@@ -7,9 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import me.yukino.fireprocess.config.CellPredictConfig;
 import me.yukino.fireprocess.enumeration.CellBurningStatus;
 import me.yukino.fireprocess.util.CellCoordinateConvertor;
-import me.yukino.fireprocess.vo.Cell;
-import me.yukino.fireprocess.vo.NodeVo;
-import me.yukino.fireprocess.vo.VertexVo;
+import me.yukino.fireprocess.vo.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,16 +24,13 @@ import java.util.*;
 public class CellPredictModelTest {
 
     private static CellPredictModel cellPredictModel;
+    private static List<SmokeDetectorVo> smokeDetectorVos;
 
     @BeforeAll
     public static void init() {
         cellPredictModel = new CellPredictModel();
         cellPredictModel.init(CellPredictConfig.dl, initCells());
-
-
-        List<Cell> burning = new ArrayList<>();
-        burning.add(fakeIgnitionCell);
-        cellPredictModel.fixBurningCells(burning);
+        initSmokeDetector();
     }
 
     private static List<Cell> initCells() {
@@ -129,8 +124,6 @@ public class CellPredictModelTest {
                 });
     }
 
-    private static Cell fakeIgnitionCell = null;
-
     private static void initRooms(JsonNode roomsNode, Set<Cell> cells) {
         ObjectMapper objectMapper = new ObjectMapper();
         VertexVo[] vertexex;
@@ -146,9 +139,6 @@ public class CellPredictModelTest {
                     Cell[][][] cellArray = getCellsBetweenTwoVertexex(vo.getV1()[0], vo.getV1()[1], vo.getV1()[2], vo.getV2()[0], vo.getV2()[1], vo.getV2()[2], true);
                     for (Cell[][] cellYZ : cellArray) {
                         for (Cell[] cellZ : cellYZ) {
-                            if (fakeIgnitionCell == null) {
-                                fakeIgnitionCell = cellZ[0];
-                            }
                             syncCellSet.addAll(Arrays.asList(cellZ));
                         }
                     }
@@ -237,8 +227,40 @@ public class CellPredictModelTest {
         return cells;
     }
 
+    private static void initSmokeDetector() {
+        smokeDetectorVos = new ArrayList<>();
+        File file = FileUtil.file("testMain.json");
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode node;
+        try {
+            node = objectMapper.readTree(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        node = node.get("smokeDetector");
+        SmokeDetectorVo[] vos;
+        try {
+            vos = objectMapper.readValue(node.toString(), SmokeDetectorVo[].class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return;
+        }
+        smokeDetectorVos = new ArrayList<>(Arrays.asList(vos));
+    }
+
     @Test
     public void testPredict() {
+        Random random = new Random();
+        int index = random.nextInt(smokeDetectorVos.size());
+        SmokeDetectorVo vo = smokeDetectorVos.get(index);
+        BurningCellVo burningCellVo = new BurningCellVo(
+                CellCoordinateConvertor.toCellIndex(vo.getX()),
+                CellCoordinateConvertor.toCellIndex(vo.getY()),
+                CellCoordinateConvertor.toCellIndex(vo.getZ()));
+        List<BurningCellVo> burningCellVos = new ArrayList<>();
+        burningCellVos.add(burningCellVo);
+        cellPredictModel.fixBurningCells(burningCellVos);
         cellPredictModel.predict(10 * 60 * 1000);
     }
 
