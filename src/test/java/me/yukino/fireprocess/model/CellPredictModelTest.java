@@ -31,6 +31,8 @@ public class CellPredictModelTest {
     public static void init() {
         cellPredictModel = new CellPredictModel();
         cellPredictModel.init(CellPredictConfig.dl, initCells());
+
+
         List<Cell> burning = new ArrayList<>();
         burning.add(fakeIgnitionCell);
         cellPredictModel.fixBurningCells(burning);
@@ -48,9 +50,11 @@ public class CellPredictModelTest {
         }
         JsonNode roomsNode = node.get("rooms");
         JsonNode wallsNode = node.get("walls");
+        JsonNode fireWallsNode = node.get("firewalls");
         Set<Cell> cellSet = new HashSet<>();
 
         initFireDoors(cellSet);
+        initFireWalls(fireWallsNode, cellSet);
         initWalls(wallsNode, cellSet);
         initRooms(roomsNode, cellSet);
         initOthers(cellSet);
@@ -58,7 +62,7 @@ public class CellPredictModelTest {
         return new ArrayList<>(cellSet);
     }
 
-    private static void initFireDoors(Set<Cell> cells){
+    private static void initFireDoors(Set<Cell> cells) {
         File file = FileUtil.file("testRoute.json");
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode node;
@@ -79,21 +83,45 @@ public class CellPredictModelTest {
 
         Set<Cell> syncCellSet = Collections.synchronizedSet(cells);
         Arrays.stream(nodes).parallel()
-                .filter(nodeVo-> "Fd".equals(nodeVo.getName()))
+                .filter(nodeVo -> "Fd".equals(nodeVo.getName()))
                 .forEach(nodeVo -> {
                     int safeRange = 5;
-                    for (int iX=0;iX<safeRange;++iX){
-                        for (int iY=0;iY<safeRange;++iY){
-                            for (int iZ=0;iZ<safeRange;++iZ){
+                    for (int iX = 0; iX < safeRange; ++iX) {
+                        for (int iY = 0; iY < safeRange; ++iY) {
+                            for (int iZ = 0; iZ < safeRange; ++iZ) {
                                 int x = CellCoordinateConvertor.toCellIndex(nodeVo.getX());
                                 int y = CellCoordinateConvertor.toCellIndex(nodeVo.getY());
                                 int z = CellCoordinateConvertor.toCellIndex(nodeVo.getZ());
-                                Cell cell = new Cell(x+iX-2,y+iY-2,z+iZ-2,
+                                Cell cell = new Cell(x + iX - 2, y + iY - 2, z + iZ - 2,
                                         CellPredictConfig.DEFAULT_V,
                                         CellPredictConfig.DEFAULT_M,
                                         CellPredictConfig.DEFAULT_BURNING_RATE,
                                         CellBurningStatus.NON_COMBUSTIBLE,
                                         CellPredictConfig.DEFAULT_PROPAGATE_PROBABILITY);
+                                syncCellSet.add(cell);
+                            }
+                        }
+                    }
+                });
+    }
+
+    private static void initFireWalls(JsonNode fireWallsNode, Set<Cell> cells) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        VertexVo[] vertexex;
+        try {
+            vertexex = objectMapper.readValue(fireWallsNode.toString(), VertexVo[].class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return;
+        }
+        Set<Cell> syncCellSet = Collections.synchronizedSet(cells);
+        Arrays.stream(vertexex).parallel()
+                .forEach(vo -> {
+                    Cell[][][] cellArray = getCellsBetweenTwoVertexex(vo.getV1()[0], vo.getV1()[1], vo.getV1()[2], vo.getV2()[0], vo.getV2()[1], vo.getV2()[2], true);
+                    for (Cell[][] cellYZ : cellArray) {
+                        for (Cell[] cellZ : cellYZ) {
+                            for (Cell cell : cellZ) {
+                                cell.setBurningStatus(CellBurningStatus.NON_COMBUSTIBLE);
                                 syncCellSet.add(cell);
                             }
                         }
@@ -118,7 +146,7 @@ public class CellPredictModelTest {
                     Cell[][][] cellArray = getCellsBetweenTwoVertexex(vo.getV1()[0], vo.getV1()[1], vo.getV1()[2], vo.getV2()[0], vo.getV2()[1], vo.getV2()[2], true);
                     for (Cell[][] cellYZ : cellArray) {
                         for (Cell[] cellZ : cellYZ) {
-                            if (fakeIgnitionCell == null){
+                            if (fakeIgnitionCell == null) {
                                 fakeIgnitionCell = cellZ[0];
                             }
                             syncCellSet.addAll(Arrays.asList(cellZ));
@@ -158,7 +186,7 @@ public class CellPredictModelTest {
         Cell[][][] cellArray = getCellsBetweenTwoVertexex(globalMinX, globalMinY, globalMinZ, globalMaxX, globalMaxY, globalMaxZ, false);
         for (Cell[][] cellYZ : cellArray) {
             for (Cell[] cellZ : cellYZ) {
-                for (Cell cell:cellZ){
+                for (Cell cell : cellZ) {
                     cell.setPropagateProbability(0.1);
                     syncCellSet.add(cell);
                 }
