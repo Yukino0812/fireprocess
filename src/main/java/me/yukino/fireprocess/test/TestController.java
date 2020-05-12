@@ -17,6 +17,10 @@ import java.util.Map;
 @RestController
 public class TestController {
 
+    /**
+     * test
+     * @return
+     */
     @GetMapping("/get")
     public String getTest() {
         return "get test success";
