@@ -256,7 +256,7 @@ public class CellPredictModelTest {
         SmokeDetectorVo vo = smokeDetectorVos.get(index);
         BurningCellVo burningCellVo = new BurningCellVo(
                 CellCoordinateConvertor.toCellIndex(vo.getX()),
-                CellCoordinateConvertor.toCellIndex(vo.getY()),
+                CellCoordinateConvertor.toCellIndex(vo.getY()-2),
                 CellCoordinateConvertor.toCellIndex(vo.getZ()));
         List<BurningCellVo> burningCellVos = new ArrayList<>();
         burningCellVos.add(burningCellVo);
