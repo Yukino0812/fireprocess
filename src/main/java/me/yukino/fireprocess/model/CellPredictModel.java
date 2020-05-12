@@ -62,7 +62,6 @@ public class CellPredictModel implements ICellPredictModel {
     private int minY;
     private int minZ;
 
-    @Override
     public void init(double dl, List<Cell> cells) {
         this.cellsIgnitionPossible = new ArrayList<>();
         this.cellsBurning = new ArrayList<>();
@@ -118,8 +117,7 @@ public class CellPredictModel implements ICellPredictModel {
         tick((int) (timeInMillis / stepSize));
     }
 
-    @Override
-    public void tick() {
+    private void tick() {
         // 记录起火元胞
         if (globalTimeCount == 0) {
             print(globalTimeCount);
@@ -199,8 +197,7 @@ public class CellPredictModel implements ICellPredictModel {
         }
     }
 
-    @Override
-    public void tick(int times) {
+    private void tick(int times) {
         for (; times > 0; times--) {
             tick();
         }

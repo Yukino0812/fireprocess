@@ -11,13 +11,7 @@ import java.util.List;
 
 public interface ICellPredictModel {
 
-    void init(double dl, List<Cell> cells);
-
     void predict(long timeInMillis);
-
-    void tick();
-
-    void tick(int times);
 
     void fixBurningCells(List<BurningCellVo> cellsBurning);
 

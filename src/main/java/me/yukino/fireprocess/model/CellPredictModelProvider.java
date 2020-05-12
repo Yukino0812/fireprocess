@@ -22,7 +22,7 @@ import java.util.*;
 
 public class CellPredictModelProvider {
 
-    private static volatile ICellPredictModel cellPredictModel;
+    private static volatile CellPredictModel cellPredictModel;
 
     public static ICellPredictModel getCellPredictModel() {
         Assert.notNull(cellPredictModel, "Call initModel() before get model.");
