@@ -25,7 +25,13 @@ public class CellPredictModelProvider {
     private static volatile CellPredictModel cellPredictModel;
 
     public static ICellPredictModel getCellPredictModel() {
-        Assert.notNull(cellPredictModel, "Call initModel() before get model.");
+        if (cellPredictModel == null){
+            synchronized (CellPredictModelProvider.class){
+                if (cellPredictModel == null){
+                    initModel();
+                }
+            }
+        }
         return cellPredictModel;
     }
 

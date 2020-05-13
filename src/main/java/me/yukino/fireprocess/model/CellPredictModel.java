@@ -2,7 +2,7 @@ package me.yukino.fireprocess.model;
 
 import me.yukino.fireprocess.config.CellPredictConfig;
 import me.yukino.fireprocess.enumeration.CellBurningStatus;
-import me.yukino.fireprocess.util.PrintPredictUtil;
+import me.yukino.fireprocess.util.DataUtil;
 import me.yukino.fireprocess.vo.BurningCellVo;
 import me.yukino.fireprocess.vo.Cell;
 
@@ -214,7 +214,7 @@ public class CellPredictModel implements ICellPredictModel {
     }
 
     private void print(long currentModelTime) {
-        PrintPredictUtil.savePredict(currentModelTime, getBurningCells());
+        DataUtil.savePredict(currentModelTime, getBurningCells());
     }
 
     @Override
