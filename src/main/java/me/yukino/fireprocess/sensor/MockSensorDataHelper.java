@@ -20,6 +20,7 @@ public class MockSensorDataHelper {
         double vrl = 3.3 * getMockADCValue(sensorId) / 4095;
         double RS = (3.3 - vrl) / vrl * RL;
         double ppm = 613.9 * Math.pow(RS / R0, -2.074);
+        ppm = CALIBRATE_PPM;
         return ppm;
     }
 
