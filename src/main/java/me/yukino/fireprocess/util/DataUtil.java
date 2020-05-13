@@ -110,7 +110,7 @@ public class DataUtil {
         }
         System.out.println(resultJson);
         FileWriter writer = FileWriter.create(file);
-        writer.write(resultJson);
+//        writer.write(resultJson);
     }
 
     /**
