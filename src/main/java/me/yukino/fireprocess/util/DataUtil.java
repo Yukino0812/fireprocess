@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class DataUtil {
 
     public static void savePredict(long currentModelTime, List<Cell> cells) {
-        File file = FileUtil.file("../fireprocess-log/predict/" + currentModelTime + ".json");
+        File file = FileUtil.file("../../../fireprocess-log/predict/" + currentModelTime + ".json");
         if (file.exists()) {
             file.delete();
         }
@@ -75,13 +75,13 @@ public class DataUtil {
     }
 
     public static void removeAllPredictData() {
-        File file = FileUtil.file("../fireprocess-log/predict");
+        File file = FileUtil.file("../../../fireprocess-log/predict");
         FileUtil.del(file);
         file.mkdirs();
     }
 
     public static List<String> getAvailablePredictData() {
-        File file = FileUtil.file("../fireprocess-log/predict");
+        File file = FileUtil.file("../../../fireprocess-log/predict");
         File[] files = file.listFiles();
         if (files == null) {
             return new ArrayList<>();
@@ -92,7 +92,7 @@ public class DataUtil {
     }
 
     public static void saveSensorData(long currentTime, List<SensorVo> sensorVos) {
-        File file = FileUtil.file("../fireprocess-log/sensor/" + currentTime + ".json");
+        File file = FileUtil.file("../../../fireprocess-log/sensor/" + currentTime + ".json");
         if (file.exists()) {
             file.delete();
         }
@@ -121,7 +121,7 @@ public class DataUtil {
      */
     @Deprecated
     private static void savePredictToExcel(long currentModelTime, List<Cell> cells) {
-        File file = FileUtil.file("../fireprocess-log/predict/" + currentModelTime + ".xlsx");
+        File file = FileUtil.file("../../../fireprocess-log/predict/" + currentModelTime + ".xlsx");
         if (file.exists()) {
             file.delete();
         }
