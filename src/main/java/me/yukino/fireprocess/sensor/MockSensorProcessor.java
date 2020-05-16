@@ -4,8 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import me.yukino.fireprocess.model.CellPredictModelProvider;
-import me.yukino.fireprocess.model.ICellPredictModel;
+import me.yukino.fireprocess.alarm.FireAlarmer;
 import me.yukino.fireprocess.util.CellCoordinateConvertor;
 import me.yukino.fireprocess.util.DataUtil;
 import me.yukino.fireprocess.vo.BurningCellVo;
@@ -92,23 +91,19 @@ public class MockSensorProcessor {
         return ppm;
     }
 
-    public void mockAlertFire(){
+    public void mockAlertFire() {
         Random random = new Random();
         int index = random.nextInt(smokeDetectorVos.size());
         SmokeDetectorVo vo = smokeDetectorVos.get(index);
         alertFire(vo);
     }
 
-    private void alertFire(SmokeDetectorVo smokeDetectorVo){
+    private void alertFire(SmokeDetectorVo smokeDetectorVo) {
         BurningCellVo burningCellVo = new BurningCellVo(
                 CellCoordinateConvertor.toCellIndex(smokeDetectorVo.getX()),
                 CellCoordinateConvertor.toCellIndex(smokeDetectorVo.getY() - 2),
                 CellCoordinateConvertor.toCellIndex(smokeDetectorVo.getZ()));
-        List<BurningCellVo> burningCellVos = new ArrayList<>();
-        burningCellVos.add(burningCellVo);
-
-        ICellPredictModel cellPredictModel = CellPredictModelProvider.getCellPredictModel();
-        cellPredictModel.fixBurningCells(burningCellVos);
+        FireAlarmer.alarmFire(burningCellVo);
     }
 
     public double getSmokeSensorPPMValue(SmokeDetectorVo smokeDetectorVo) {

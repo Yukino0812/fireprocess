@@ -1,4 +1,4 @@
-package me.yukino.fireprocess.controller;
+package me.yukino.fireprocess.model;
 
 import me.yukino.fireprocess.model.CellPredictModelProvider;
 import org.springframework.scheduling.annotation.Scheduled;

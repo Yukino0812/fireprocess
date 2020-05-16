@@ -1,6 +1,7 @@
 package me.yukino.fireprocess.controller;
 
 import me.yukino.fireprocess.model.CellPredictModelProvider;
+import me.yukino.fireprocess.model.ModelPredictMessageQueue;
 import me.yukino.fireprocess.sensor.MockSensorProcessor;
 import me.yukino.fireprocess.util.DataUtil;
 import me.yukino.fireprocess.vo.ResponseVo;
