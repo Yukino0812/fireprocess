@@ -92,24 +92,24 @@ public class DataUtil {
     }
 
     public static void saveSensorData(long currentTime, List<SensorVo> sensorVos) {
-        File file = FileUtil.file("../../../fireprocess-log/sensor/" + currentTime + ".json");
-        if (file.exists()) {
-            file.delete();
-        }
-        FileUtil.touch(file);
-        if (!file.canWrite()) {
-            file.setWritable(true);
-        }
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        String resultJson = "";
-        try {
-            resultJson = objectMapper.writeValueAsString(sensorVos);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        System.out.println(resultJson);
-        FileWriter writer = FileWriter.create(file);
+//        File file = FileUtil.file("../../../fireprocess-log/sensor/" + currentTime + ".json");
+//        if (file.exists()) {
+//            file.delete();
+//        }
+//        FileUtil.touch(file);
+//        if (!file.canWrite()) {
+//            file.setWritable(true);
+//        }
+//
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        String resultJson = "";
+//        try {
+//            resultJson = objectMapper.writeValueAsString(sensorVos);
+//        } catch (JsonProcessingException e) {
+//            e.printStackTrace();
+//        }
+//        System.out.println(resultJson);
+//        FileWriter writer = FileWriter.create(file);
 //        writer.write(resultJson);
     }
 
