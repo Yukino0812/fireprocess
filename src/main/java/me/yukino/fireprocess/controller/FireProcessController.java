@@ -49,7 +49,7 @@ public class FireProcessController {
         int cellY = CellCoordinateConvertor.toCellIndex(y);
         int cellZ = CellCoordinateConvertor.toCellIndex(z);
         BurningCellVo burningCellVo = new BurningCellVo(cellX, cellY, cellZ);
-//        FireAlarmer.alarmFire(burningCellVo);
+        FireAlarmer.alarmFire(burningCellVo);
         return new ResponseVo(0,"Manually alarm fire success");
     }
 
